@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aventura do Pensamento Computacional</title>
+<style>
+  :root{
+    --bg1:#0f172a;
+    --bg2:#1e1b4b;
+    --primary:#8b5cf6;
+    --primary2:#6366f1;
+    --pink:#ec4899;
+    --cyan:#06b6d4;
+    --green:#10b981;
+    --red:#ef4444;
+    --yellow:#f59e0b;
+    --text:#f1f5f9;
+    --muted:#94a3b8;
+    --card:rgba(255,255,255,0.08);
+    --card-border:rgba(255,255,255,0.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    color:var(--text);
+    background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 50%,#312e81 100%);
+    background-attachment:fixed;
+    user-select:none;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 20% 20%,rgba(139,92,246,.25),transparent 40%),
+      radial-gradient(circle at 80% 70%,rgba(236,72,153,.2),transparent 40%),
+      radial-gradient(circle at 50% 100%,rgba(6,182,212,.15),transparent 50%);
+    z-index:0;
+  }
+  #app{position:relative;z-index:1;height:100%;width:100%;display:flex;flex-direction:column}
+
+  /* HEADER */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;
+    background:rgba(15,23,42,.5);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--card-border);
+  }
+  .logo{display:flex;align-items:center;gap:12px;font-weight:700;font-size:18px}
+  .logo svg{width:36px;height:36px}
+  .stats{display:flex;gap:18px;align-items:center;font-size:14px}
+  .stat{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--card);border-radius:20px;border:1px solid var(--card-border)}
+  .stat .icon{font-size:16px}
+
+  /* MAIN */
+  main{flex:1;overflow:auto;padding:20px;display:flex;align-items:center;justify-content:center}
+  .screen{width:100%;max-width:1100px;animation:fadeIn .5s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* HOME */
+  .home{text-align:center;padding:20px}
+  .home h1{font-size:clamp(28px,5vw,52px);font-weight:800;margin-bottom:12px;background:linear-gradient(90deg,#a78bfa,#f472b6,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-1px}
+  .home p.lead{font-size:clamp(14px,2vw,18px);color:var(--muted);max-width:600px;margin:0 auto 30px;line-height:1.6}
+  .robot-wrap{margin:20px auto;position:relative;width:200px;height:200px}
+  .robot-wrap svg{width:100%;height:100%;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+  .phases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:30px}
+  .phase-card{
+    background:var(--card);border:1px solid var(--card-border);
+    border-radius:18px;padding:22px;cursor:pointer;
+    transition:all .3s cubic-bezier(.4,0,.2,1);
+    position:relative;overflow:hidden;
+    text-align:left;
+  }
+  .phase-card::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(135deg,var(--c1),var(--c2));
+    opacity:0;transition:opacity .3s;
+  }
+  .phase-card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.3);box-shadow:0 20px 40px rgba(139,92,246,.3)}
+  .phase-card:hover::before{opacity:.15}
+  .phase-card > *{position:relative;z-index:1}
+  .phase-card .num{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
+  .phase-card h3{font-size:18px;margin-bottom:8px}
+  .phase-card p{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px}
+  .phase-card .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;background:rgba(255,255,255,.1);border-radius:12px}
+  .phase-card.completed{border-color:var(--green)}
+  .phase-card.completed .badge{background:rgba(16,185,129,.2);color:var(--green)}
+  .phase-card .icon-big{font-size:32px;margin-bottom:10px;display:block}
+
+  /* GAME SCREEN */
+  .game{display:flex;flex-direction:column;gap:16px}
+  .game-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .back-btn{background:var(--card);border:1px solid var(--card-border);color:var(--text);padding:8px 16px;border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;display:flex;align-items:center;gap:6px}
+  .back-btn:hover{background:rgba(255,255,255,.15)}
+  .phase-title{display:flex;align-items:center;gap:12px}
+  .phase-title h2{font-size:22px;font-weight:700}
+  .phase-title .emoji{font-size:28px}
+  .progress-bar{height:8px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--pink));transition:width .5s ease;border-radius:10px}
+
+  .game-body{background:var(--card);border:1px solid var(--card-border);border-radius:20px;padding:28px;min-height:400px;position:relative}
+  .instruction{font-size:16px;margin-bottom:20px;line-height:1.6;color:var(--text)}
+  .instruction strong{color:#fbbf24}
+
+  /* PHASE 1 - ALGORITMO */
+  .steps-container{display:flex;flex-direction:column;gap:12px;min-height:300px;padding:10px;border-radius:14px;background:rgba(0,0,0,.2);border:2px dashed rgba(255,255,255,.15)}
+  .step-item{
+    background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(99,102,241,.3));
+    border:1px solid rgba(255,255,255,.2);
+    padding:14px 18px;border-radius:12px;
+    cursor:grab;display:flex;align-items:center;gap:12px;
+    transition:all .2s;font-size:15px;
+  }
+  .step-item:active{cursor:grabbing}
+  .step-item:hover{transform:translateX(4px);border-color:var(--primary)}
+  .step-item .handle{color:var(--muted);font-size:18px}
+  .step-item .num-circle{width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+  .step-item.dragging{opacity:.5}
+  .step-item.correct{background:linear-gradient(135deg,rgba(16,185,129,.4),rgba(5,150,105,.4));border-color:var(--green)}
+  .step-item.wrong{background:linear-gradient(135deg,rgba(239,68,68,.4),rgba(220,38,38,.4));border-color:var(--red);animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+  /* PHASE 2 - PADRÕES */
+  .pattern-area{display:flex;flex-direction:column;align-items:center;gap:24px}
+  .sequence{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+  .seq-item{
+    width:70px;height:70px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;font-weight:700;
+    background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(236,72,153,.3));
+    border:2px solid rgba(255,255,255,.2);
+    transition:all .3s;
+  }
+  .seq-item.missing{
+    background:rgba(0,0,0,.3);border:2px dashed var(--yellow);
+    color:var(--yellow);font-size:28px;
+  }
+  .seq-item.revealed{animation:pop .5s ease;background:linear-gradient(135deg,var(--green),#059669);border-color:var(--green)}
+  @keyframes pop{0%{transform:scale(.5)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .options{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:10px;max-width:500px;width:100%}
+  .option{
+    padding:16px;border-radius:12px;cursor:pointer;
+    background:var(--card);border:2px solid var(--card-border);
+    font-size:24px;font-weight:700;text-align:center;
+    transition:all .2s;
+  }
+  .option:hover{transform:translateY(-3px);border-color:var(--primary);background:rgba(139,92,246,.2)}
+  .option.selected{border-color:var(--primary);background:rgba(139,92,246,.3)}
+  .option.correct{background:rgba(16,185,129,.3);border-color:var(--green);animation:pop .4s}
+  .option.wrong{background:rgba(239,68,68,.3);border-color:var(--red);animation:shake .4s}
+
+  /* PHASE 3 - ABSTRAÇÃO */
+  .abstraction-area{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:700px){.abstraction-area{grid-template-columns:1fr}}
+  .object-display{
+    background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(139,92,246,.2));
+    border-radius:18px;padding:24px;text-align:center;
+    border:1px solid var(--card-border);
+  }
+  .object-display .obj-icon{font-size:80px;margin-bottom:12px;display:block}
+  .object-display h3{font-size:20px;margin-bottom:6px}
+  .object-display p{font-size:13px;color:var(--muted)}
+  .traits-list{display:flex;flex-direction:column;gap:10px}
+  .trait{
+    display:flex;align-items:center;gap:12px;padding:12px 16px;
+    background:var(--card);border:2px solid var(--card-border);
+    border-radius:12px;cursor:pointer;transition:all .2s;
+  }
+  .trait:hover{border-color:var(--primary);transform:translateX(4px)}
+  .trait .check{width:24px;height:24px;border-radius:6px;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+  .trait.selected{border-color:var(--cyan);background:rgba(6,182,212,.15)}
+  .trait.selected .check{background:var(--cyan);border-color:var(--cyan);color:#fff}
+  .trait.correct{border-color:var(--green);background:rgba(16,185,129,.15)}
+  .trait.correct .check{background:var(--green);border-color:var(--green)}
+  .trait.wrong{border-color:var(--red);background:rgba(239,68,68,.15)}
+  .trait.wrong .check{background:var(--red);border-color:var(--red)}
+
+  /* PHASE 4 - DECOMPOSIÇÃO */
+  .decomp-area{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:700px){.decomp-area{grid-template-columns:1fr}}
+  .problem-box{
+    background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(239,68,68,.2));
+    border:2px solid rgba(245,158,11,.4);
+    border-radius:16px;padding:20px;
+  }
+  .problem-box h3{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:18px}
+  .problem-box p{font-size:14px;color:var(--muted);line-height:1.6}
+  .groups{display:flex;flex-direction:column;gap:14px}
+  .group{
+    background:var(--card);border:2px dashed var(--card-border);
+    border-radius:14px;padding:14px;min-height:100px;
+  }
+  .group h4{font-size:14px;margin-bottom:10px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .group .items{display:flex;flex-wrap:wrap;gap:8px}
+  .subtask{
+    padding:8px 14px;background:rgba(139,92,246,.3);
+    border:1px solid rgba(255,255,255,.2);border-radius:20px;
+    font-size:13px;cursor:grab;transition:all .2s;
+  }
+  .subtask:hover{background:rgba(139,92,246,.5)}
+  .subtask.placed{background:rgba(16,185,129,.3);border-color:var(--green)}
+  .pool{display:flex;flex-wrap:wrap;gap:8px;padding:14px;background:rgba(0,0,0,.2);border-radius:12px;margin-top:10px}
+  .pool h4{width:100%;margin-bottom:8px;font-size:13px;color:var(--muted)}
+
+  /* BUTTONS */
+  .btn{
+    padding:12px 24px;border-radius:12px;border:none;cursor:pointer;
+    font-size:15px;font-weight:600;transition:all .2s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--pink));color:#fff;box-shadow:0 8px 20px rgba(139,92,246,.4)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(139,92,246,.5)}
+  .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--card-border)}
+  .btn-secondary:hover{background:rgba(255,255,255,.15)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+
+  /* FEEDBACK */
+  .feedback{
+    position:fixed;top:30px;left:50%;transform:translateX(-50%);
+    padding:14px 24px;border-radius:14px;font-weight:600;
+    z-index:100;animation:slideDown .4s ease;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  @keyframes slideDown{from{transform:translate(-50%,-100px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  .feedback.success{background:linear-gradient(135deg,var(--green),#059669);color:#fff}
+  .feedback.error{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff}
+  .feedback.info{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
+
+  /* MODAL */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;z-index:200;
+    animation:fadeIn .3s;
+  }
+  .modal{
+    background:linear-gradient(135deg,#1e1b4b,#312e81);
+    border:1px solid var(--card-border);
+    border-radius:24px;padding:36px;max-width:440px;width:90%;
+    text-align:center;animation:pop .5s ease;
+  }
+  .modal h2{font-size:28px;margin-bottom:10px;background:linear-gradient(90deg,#fbbf24,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .modal p{color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .stars{display:flex;justify-content:center;gap:8px;margin:20px 0}
+  .star{font-size:42px;opacity:.3;transition:all .4s}
+  .star.active{opacity:1;animation:starPop .6s ease}
+  @keyframes starPop{0%{transform:scale(0) rotate(-180deg)}60%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+
+  /* CONFETTI */
+  .confetti{position:fixed;width:10px;height:10px;top:-10px;pointer-events:none;z-index:150;animation:fall 3s linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  /* SOUND TOGGLE */
+  .sound-btn{background:var(--card);border:1px solid var(--card-border);color:var(--text);width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .sound-btn:hover{background:rgba(255,255,255,.15)}
+  .sound-btn.muted{opacity:.5}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.3)}
+
+  .hint-box{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;font-size:13px;color:#fcd34d;margin-top:12px;display:flex;gap:8px;align-items:start}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 64 64" fill="none">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a78bfa"/>
+            <stop offset="1" stop-color="#f472b6"/>
+          </linearGradient>
+        </defs>
+        <rect x="12" y="18" width="40" height="32" rx="8" fill="url(#lg1)"/>
+        <circle cx="24" cy="32" r="4" fill="#fff"/>
+        <circle cx="40" cy="32" r="4" fill="#fff"/>
+        <rect x="26" y="40" width="12" height="3" rx="1.5" fill="#fff"/>
+        <rect x="28" y="8" width="8" height="12" rx="2" fill="url(#lg1)"/>
+        <circle cx="32" cy="6" r="3" fill="#fbbf24"/>
+      </svg>
+      <span>CodeQuest</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="icon">⭐</span><span id="score">0</span></div>
+      <div class="stat"><span class="icon">🏆</span><span id="completed-count">0</span>/4</div>
+      <button class="sound-btn" id="soundBtn" title="Som">🔊</button>
+    </div>
+  </header>
+
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============ SOUND ENGINE (Web Audio API) ============ */
+const Sound = (() => {
+  let ctx = null;
+  let muted = false;
+  const init = () => { if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); };
+  const tone = (freq, duration=0.15, type='sine', vol=0.15) => {
+    if(muted) return;
+    init();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  };
+  return {
+    click: () => tone(600, 0.05, 'square', 0.08),
+    success: () => { tone(523, 0.1); setTimeout(()=>tone(659,0.1),80); setTimeout(()=>tone(784,0.15),160); },
+    error: () => { tone(220, 0.15, 'sawtooth', 0.12); setTimeout(()=>tone(180,0.2,'sawtooth',0.12),100); },
+    win: () => { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.2,'triangle',0.15),i*120)); },
+    drop: () => tone(440, 0.08, 'sine', 0.1),
+    toggle: () => { muted = !muted; return muted; },
+    isMuted: () => muted
+  };
+})();
+
+/* ============ STATE ============ */
+const state = {
+  screen: 'home',
+  score: 0,
+  completed: new Set(),
+  currentPhase: null,
+  currentChallenge: 0,
+  mistakes: 0
+};
+
+/* ============ PHASES DATA ============ */
+const phases = {
+  algorithm: {
+    title: "Algoritmo",
+    emoji: "📋",
+    desc: "Organize passos na ordem correta",
+    color1: "#8b5cf6", color2: "#6366f1",
+    challenges: [
+      {
+        instruction: "Organize os passos para <strong>escovar os dentes</strong> na ordem correta:",
+        steps: [
+          "Pegar a escova de dentes",
+          "Colocar pasta na escova",
+          "Escravar os dentes por 2 minutos",
+          "Enxaguar a boca com água",
+          "Lavar a escova e guardar"
+        ]
+      },
+      {
+        instruction: "Organize os passos para <strong>fazer um bolo</strong>:",
+        steps: [
+          "Ligar o forno para pré-aquecer",
+          "Misturar os ingredientes secos",
+          "Adicionar os ingredientes líquidos",
+          "Bater a massa até ficar homogênea",
+          "Colocar na forma e assar",
+          "Deixar esfriar e decorar"
+        ]
+      }
+    ]
+  },
+  patterns: {
+    title: "Reconhecimento de Padrões",
+    emoji: "🔍",
+    desc: "Descubra a lógica das sequências",
+    color1: "#ec4899", color2: "#f43f5e",
+    challenges: [
+      {
+        instruction: "Qual elemento completa a sequência?",
+        sequence: ["🔴","🔵","🔴","🔵","🔴","?"],
+        answer: "🔵",
+        options: ["🔴","🔵","🟢","🟡"]
+      },
+      {
+        instruction: "Descubra o próximo número da sequência:",
+        sequence: ["2","4","8","16","?"],
+        answer: "32",
+        options: ["20","24","32","64"]
+      },
+      {
+        instruction: "Complete o padrão de formas:",
+        sequence: ["▲","▲","●","▲","▲","?"],
+        answer: "●",
+        options: ["▲","●","■","◆"]
+      }
+    ]
+  },
+  abstraction: {
+    title: "Abstração",
+    emoji: "💡",
+    desc: "Identifique o que é essencial",
+    color1: "#06b6d4", color2: "#0891b2",
+    challenges: [
+      {
+        object: { icon: "🚗", name: "Carro", desc: "Veículo automotor de passeio" },
+        question: "Quais características são <strong>essenciais</strong> para definir um carro?",
+        traits: [
+          { text: "Tem motor", essential: true },
+          { text: "É da cor vermelha", essential: false },
+          { text: "Tem 4 rodas", essential: true },
+          { text: "O dono se chama João", essential: false },
+          { text: "Serve para transporte", essential: true },
+          { text: "Tem placa", essential: true }
+        ]
+      },
+      {
+        object: { icon: "📚", name: "Livro", desc: "Obra com conteúdo escrito" },
+        question: "O que é <strong>essencial</strong> para algo ser um livro?",
+        traits: [
+          { text: "Tem páginas", essential: true },
+          { text: "É azul", essential: false },
+          { text: "Contém texto ou imagens", essential: true },
+          { text: "Custa R$ 50", essential: false },
+          { text: "Tem um autor", essential: true },
+          { text: "Fica na estante", essential: false }
+        ]
+      }
+    ]
+  },
+  decomposition: {
+    title: "Decomposição",
+    emoji: "🧩",
+    desc: "Divida problemas em partes menores",
+    color1: "#f59e0b", color2: "#d97706",
+    challenges: [
+      {
+        problem: { title: "🎉 Organizar uma Festa", desc: "Você precisa organizar uma festa de aniversário para 20 amigos no próximo sábado." },
+        groups: [
+          { name: "🍰 Comida & Bebida", items: ["Comprar bolo","Comprar refrigerante","Fazer salgadinhos"] },
+          { name: "🎵 Entretenimento", items: ["Escolher playlist","Preparar jogos","Decorar o salão"] },
+          { name: "👥 Convidados", items: ["Fazer lista de convidados","Enviar convites","Confirmar presenças"] }
+        ]
+      },
+      {
+        problem: { title: "🏠 Limpar a Casa", desc: "A casa inteira precisa ser limpa antes da visita que chega amanhã." },
+        groups: [
+          { name: "🛋️ Sala", items: ["Aspirar o tapete","Limpar o sofá","Organar a estante"] },
+          { name: "🍳 Cozinha", items: ["Lavar a louça","Limpar o fogão","Organar a geladeira"] },
+          { name: "🛏️ Quartos", items: ["Trocar roupa de cama","Guardar roupas","Passar pano no chão"] }
+        ]
+      }
+    ]
+  }
+};
+
+/* ============ RENDER ============ */
+const main = document.getElementById('main');
+const scoreEl = document.getElementById('score');
+const completedEl = document.getElementById('completed-count');
+
+function updateStats(){
+  scoreEl.textContent = state.score;
+  completedEl.textContent = state.completed.size;
+}
+
+function render(){
+  main.innerHTML = '';
+  if(state.screen === 'home') renderHome();
+  else if(state.screen === 'game') renderGame();
+  updateStats();
+}
+
+function renderHome(){
+  const screen = document.createElement('div');
+  screen.className = 'screen home';
+  screen.innerHTML = `
+    <div class="robot-wrap">
+      <svg viewBox="0 0 200 200">
+        <defs>
+          <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a78bfa"/>
+            <stop offset="1" stop-color="#f472b6"/>
+          </linearGradient>
+          <radialGradient id="eyeGlow">
+            <stop offset="0" stop-color="#fff"/>
+            <stop offset="1" stop-color="#22d3ee"/>
+          </radialGradient>
+        </defs>
+        <!-- antenna -->
+        <line x1="100" y1="30" x2="100" y2="55" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="100" cy="25" r="8" fill="#fbbf24">
+          <animate attributeName="fill" values="#fbbf24;#f472b6;#fbbf24" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <!-- head -->
+        <rect x="55" y="55" width="90" height="75" rx="18" fill="url(#bodyGrad)" stroke="#fff" stroke-width="2"/>
+        <!-- eyes -->
+        <circle cx="80" cy="90" r="10" fill="url(#eyeGlow)">
+          <animate attributeName="r" values="10;8;10" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="120" cy="90" r="10" fill="url(#eyeGlow)">
+          <animate attributeName="r" values="10;8;10" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="80" cy="90" r="4" fill="#0f172a"/>
+        <circle cx="120" cy="90" r="4" fill="#0f172a"/>
+        <!-- mouth -->
+        <path d="M 80 115 Q 100 128 120 115" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- body -->
+        <rect x="65" y="135" width="70" height="45" rx="12" fill="url(#bodyGrad)" stroke="#fff" stroke-width="2"/>
+        <circle cx="100" cy="157" r="6" fill="#fbbf24">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <!-- arms -->
+        <rect x="40" y="140" width="20" height="30" rx="8" fill="url(#bodyGrad)" stroke="#fff" stroke-width="2"/>
+        <rect x="140" y="140" width="20" height="30" rx="8" fill="url(#bodyGrad)" stroke="#fff" stroke-width="2"/>
+      </svg>
+    </div>
+    <h1>Aventura do Pensamento Computacional</h1>
+    <p class="lead">
+      Olá, explorador(a)! Eu sou o <strong>Bit</strong>, seu guia nesta jornada. 
+      Vamos aprender os 4 pilares do pensamento computacional através de desafios divertidos! 🚀
+    </p>
+    <div class="phases-grid" id="phasesGrid"></div>
+  `;
+  main.appendChild(screen);
+
+  const grid = document.getElementById('phasesGrid');
+  Object.entries(phases).forEach(([key, phase], idx) => {
+    const card = document.createElement('div');
+    card.className = 'phase-card' + (state.completed.has(key) ? ' completed' : '');
+    card.style.setProperty('--c1', phase.color1);
+    card.style.setProperty('--c2', phase.color2);
+    card.innerHTML = `
+      <span class="icon-big">${phase.emoji}</span>
+      <div class="num">FASE 0${idx+1}</div>
+      <h3>${phase.title}</h3>
+      <p>${phase.desc}</p>
+      <span class="badge">
+        ${state.completed.has(key) ? '✅ Concluída' : '▶ Jogar'}
+      </span>
+    `;
+    card.onclick = () => {
+      Sound.click();
+      state.currentPhase = key;
+      state.currentChallenge = 0;
+      state.mistakes = 0;
+      state.screen = 'game';
+      render();
+    };
+    grid.appendChild(card);
+  });
+}
+
+/* ============ GAME RENDER ============ */
+function renderGame(){
+  const phase = phases[state.currentPhase];
+  const screen = document.createElement('div');
+  screen.className = 'screen game';
+  const totalChallenges = phase.challenges.length;
+  const progress = (state.currentChallenge / totalChallenges) * 100;
+
+  screen.innerHTML = `
+    <div class="game-header">
+      <button class="back-btn" id="backBtn">← Voltar</button>
+      <div class="phase-title">
+        <span class="emoji">${phase.emoji}</span>
+        <h2>${phase.title}</h2>
+      </div>
+      <div class="stat"><span class="icon">🎯</span>Desafio ${state.currentChallenge+1}/${totalChallenges}</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+    <div class="game-body" id="gameBody"></div>
+  `;
+  main.appendChild(screen);
+
+  document.getElementById('backBtn').onclick = () => {
+    Sound.click();
+    state.screen = 'home';
+    render();
+  };
+
+  const body = document.getElementById('gameBody');
+  if(state.currentPhase === 'algorithm') renderAlgorithm(body);
+  else if(state.currentPhase === 'patterns') renderPatterns(body);
+  else if(state.currentPhase === 'abstraction') renderAbstraction(body);
+  else if(state.currentPhase === 'decomposition') renderDecomposition(body);
+}
+
+/* ============ PHASE 1: ALGORITHM ============ */
+function renderAlgorithm(container){
+  const challenge = phases.algorithm.challenges[state.currentChallenge];
+  const shuffled = [...challenge.steps].sort(() => Math.random() - 0.5);
+  let currentOrder = [...shuffled];
+
+  container.innerHTML = `
+    <div class="instruction">${challenge.instruction}</div>
+    <div class="steps-container" id="stepsContainer"></div>
+    <div class="hint-box">💡 <span>Arraste os itens para reordená-los. Quando estiver na ordem certa, clique em "Verificar".</span></div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="shuffleBtn">🔀 Embaralhar</button>
+      <button class="btn btn-primary" id="checkBtn">✓ Verificar Ordem</button>
+    </div>
+  `;
+
+  const stepsContainer = document.getElementById('stepsContainer');
+  let draggedItem = null;
+
+  function renderSteps(){
+    stepsContainer.innerHTML = '';
+    currentOrder.forEach((step, idx) => {
+      const item = document.createElement('div');
+      item.className = 'step-item';
+      item.draggable = true;
+      item.dataset.idx = idx;
+      item.innerHTML = `
+        <span class="handle">⋮⋮</span>
+        <span class="num-circle">${idx+1}</span>
+        <span>${step}</span>
+      `;
+      item.addEventListener('dragstart', e => {
+        draggedItem = item;
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        draggedItem = null;
+      });
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        if(draggedItem && draggedItem !== item){
+          const rect = item.getBoundingClientRect();
+          const midY = rect.top + rect.height/2;
+          const fromIdx = parseInt(draggedItem.dataset.idx);
+          const toIdx = parseInt(item.dataset.idx);
+          if(e.clientY < midY){
+            if(fromIdx > toIdx){
+              const moved = currentOrder.splice(fromIdx,1)[0];
+              currentOrder.splice(toIdx, 0, moved);
+              renderSteps();
+            }
+          } else {
+            if(fromIdx < toIdx){
+              const moved = currentOrder.splice(fromIdx,1)[0];
+              currentOrder.splice(toIdx, 0, moved);
+              renderSteps();
+            }
+          }
+        }
+      });
+      // Touch support
+      item.addEventListener('click', () => {
+        Sound.click();
+      });
+      stepsContainer.appendChild(item);
+    });
+  }
+  renderSteps();
+
+  document.getElementById('shuffleBtn').onclick = () => {
+    Sound.click();
+    currentOrder = [...challenge.steps].sort(() => Math.random() - 0.5);
+    renderSteps();
+  };
+
+  document.getElementById('checkBtn').onclick = () => {
+    const items = stepsContainer.querySelectorAll('.step-item');
+    let allCorrect = true;
+    items.forEach((item, idx) => {
+      const isCorrect = currentOrder[idx] === challenge.steps[idx];
+      item.classList.remove('correct','wrong');
+      setTimeout(() => {
+        if(isCorrect){
+          item.classList.add('correct');
+        } else {
+          item.classList.add('wrong');
+          allCorrect = false;
+        }
+      }, idx * 100);
+    });
+    setTimeout(() => {
+      if(currentOrder.every((s,i) => s === challenge.steps[i])){
+        Sound.success();
+        state.score += 100 - state.mistakes * 10;
+        showFeedback('success', '✨ Perfeito! Sequência correta!');
+        setTimeout(nextChallenge, 1200);
+      } else {
+        Sound.error();
+        state.mistakes++;
+        showFeedback('error', '❌ Ordem incorreta. Tente novamente!');
+        setTimeout(() => {
+          items.forEach(i => i.classList.remove('correct','wrong'));
+        }, 1500);
+      }
+    }, items.length * 100 + 200);
+  };
+}
+
+/* ============ PHASE 2: PATTERNS ============ */
+function renderPatterns(container){
+  const challenge = phases.patterns.challenges[state.currentChallenge];
+  let selected = null;
+
+  container.innerHTML = `
+    <div class="instruction">${challenge.instruction}</div>
+    <div class="pattern-area">
+      <div class="sequence" id="sequence"></div>
+      <div class="options" id="options"></div>
+    </div>
+    <div class="hint-box">💡 <span>Observe a sequência com atenção. Qual é a lógica? Clique na opção correta!</span></div>
+  `;
+
+  const seqEl = document.getElementById('sequence');
+  challenge.sequence.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'seq-item' + (item === '?' ? ' missing' : '');
+    el.textContent = item;
+    seqEl.appendChild(el);
+  });
+
+  const optionsEl = document.getElementById('options');
+  challenge.options.forEach(opt => {
+    const el = document.createElement('div');
+    el.className = 'option';
+    el.textContent = opt;
+    el.onclick = () => {
+      if(selected !== null) return;
+      selected = opt;
+      Sound.click();
+      document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      setTimeout(checkAnswer, 400);
+    };
+    optionsEl.appendChild(el);
+  });
+
+  function checkAnswer(){
+    const options = document.querySelectorAll('.option');
+    const missingEl = document.querySelector('.seq-item.missing');
+    if(selected === challenge.answer){
+      Sound.success();
+      options.forEach(o => {
+        if(o.textContent === challenge.answer) o.classList.add('correct');
+      });
+      missingEl.textContent = challenge.answer;
+      missingEl.classList.remove('missing');
+      missingEl.classList.add('revealed');
+      state.score += 80 - state.mistakes * 10;
+      showFeedback('success', '🎯 Padrão identificado!');
+      setTimeout(nextChallenge, 1500);
+    } else {
+      Sound.error();
+      state.mistakes++;
+      options.forEach(o => {
+        if(o.textContent === selected) o.classList.add('wrong');
+      });
+      showFeedback('error', '🤔 Não é esse. Tente outro!');
+      setTimeout(() => {
+        options.forEach(o => {
+          o.classList.remove('selected','wrong');
+        });
+        selected = null;
+      }, 1000);
+    }
+  }
+}
+
+/* ============ PHASE 3: ABSTRACTION ============ */
+function renderAbstraction(container){
+  const challenge = phases.abstraction.challenges[state.currentChallenge];
+  const selected = new Set();
+
+  container.innerHTML = `
+    <div class="instruction">${challenge.question}</div>
+    <div class="abstraction-area">
+      <div class="object-display">
+        <span class="obj-icon">${challenge.object.icon}</span>
+        <h3>${challenge.object.name}</h3>
+        <p>${challenge.object.desc}</p>
+      </div>
+      <div class="traits-list" id="traitsList"></div>
+    </div>
+    <div class="hint-box">💡 <span>Selecione apenas as características que são <strong>essenciais</strong> para definir o conceito. Cuidado com os detalhes irrelevantes!</span></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="checkBtn">✓ Verificar Seleção</button>
+    </div>
+  `;
+
+  const list = document.getElementById('traitsList');
+  challenge.traits.forEach((trait, idx) => {
+    const el = document.createElement('div');
+    el.className = 'trait';
+    el.innerHTML = `
+      <div class="check"></div>
+      <span>${trait.text}</span>
+    `;
+    el.onclick = () => {
+      Sound.click();
+      if(selected.has(idx)){
+        selected.delete(idx);
+        el.classList.remove('selected');
+      } else {
+        selected.add(idx);
+        el.classList.add('selected');
+      }
+    };
+    list.appendChild(el);
+  });
+
+  document.getElementById('checkBtn').onclick = () => {
+    const traits = list.querySelectorAll('.trait');
+    let correct = true;
+    challenge.traits.forEach((trait, idx) => {
+      const isSelected = selected.has(idx);
+      const shouldBe = trait.essential;
+      traits[idx].classList.remove('selected','correct','wrong');
+      if(isSelected === shouldBe){
+        traits[idx].classList.add('correct');
+        traits[idx].querySelector('.check').innerHTML = '✓';
+      } else {
+        traits[idx].classList.add('wrong');
+        traits[idx].querySelector('.check').innerHTML = '✗';
+        correct = false;
+      }
+    });
+    if(correct){
+      Sound.success();
+      state.score += 100 - state.mistakes * 10;
+      showFeedback('success', '💡 Abstração perfeita!');
+      setTimeout(nextChallenge, 1500);
+    } else {
+      Sound.error();
+      state.mistakes++;
+      showFeedback('error', '🎨 Nem tudo é essencial. Reveja sua seleção!');
+      setTimeout(() => {
+        traits.forEach(t => {
+          t.classList.remove('correct','wrong');
+          t.querySelector('.check').innerHTML = '';
+        });
+        selected.clear();
+      }, 2000);
+    }
+  };
+}
+
+/* ============ PHASE 4: DECOMPOSITION ============ */
+function renderDecomposition(container){
+  const challenge = phases.decomposition.challenges[state.currentChallenge];
+  // Pool of all subtasks shuffled
+  const allItems = [];
+  challenge.groups.forEach(g => g.items.forEach(it => allItems.push({text: it, group: g.name})));
+  const shuffled = [...allItems].sort(() => Math.random() - 0.5);
+  const placed = {}; // groupIdx -> [items]
+  challenge.groups.forEach((_,i) => placed[i] = []);
+
+  container.innerHTML = `
+    <div class="instruction">Divida o problema abaixo em <strong>partes menores</strong>, arrastando cada subtarefa para a categoria correta:</div>
+    <div class="decomp-area">
+      <div class="problem-box">
+        <h3>${challenge.problem.title}</h3>
+        <p>${challenge.problem.desc}</p>
+      </div>
+      <div class="groups" id="groupsArea"></div>
+    </div>
+    <div class="pool" id="pool">
+      <h4>📦 Subtarefas disponíveis:</h4>
+    </div>
+    <div class="hint-box">💡 <span>Clique em uma subtarefa e depois na categoria onde ela se encaixa. Pense em como dividir o problema grande em partes menores!</span></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="checkBtn">✓ Verificar Decomposição</button>
+    </div>
+  `;
+
+  const groupsArea = document.getElementById('groupsArea');
+  challenge.groups.forEach((g, gIdx) => {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'group';
+    groupEl.dataset.gidx = gIdx;
+    groupEl.innerHTML = `<h4>${g.name} <span style="font-size:11px;color:var(--muted)">(${placed[gIdx].length}/${g.items.length})</span></h4><div class="items"></div>`;
+    groupEl.onclick = (e) => {
+      if(selectedItem === null) return;
+      Sound.drop();
+      const itemData = shuffled[selectedItem];
+      placed[gIdx].push(itemData);
+      shuffled[selectedItem].placed = true;
+      selectedItem = null;
+      renderAll();
+    };
+    groupsArea.appendChild(groupEl);
+  });
+
+  const pool = document.getElementById('pool');
+  let selectedItem = null;
+
+  function renderAll(){
+    // Pool
+    pool.innerHTML = '<h4>📦 Subtarefas disponíveis:</h4>';
+    shuffled.forEach((it, idx) => {
+      if(it.placed) return;
+      const el = document.createElement('div');
+      el.className = 'subtask';
+      el.textContent = it.text;
+      el.onclick = () => {
+        Sound.click();
+        document.querySelectorAll('.subtask').forEach(s => s.style.outline = '');
+        el.style.outline = '2px solid var(--yellow)';
+        selectedItem = idx;
+      };
+      pool.appendChild(el);
+    });
+    if(shuffled.every(it => it.placed)){
+      pool.innerHTML += '<p style="color:var(--green);font-size:13px">✓ Todas as subtarefas foram distribuídas!</p>';
+    }
+
+    // Groups
+    challenge.groups.forEach((g, gIdx) => {
+      const groupEl = groupsArea.children[gIdx];
+      const itemsEl = groupEl.querySelector('.items');
+      itemsEl.innerHTML = '';
+      placed[gIdx].forEach((it, iIdx) => {
+        const el = document.createElement('div');
+        el.className = 'subtask placed';
+        el.textContent = it.text;
+        el.onclick = (e) => {
+          e.stopPropagation();
+          Sound.click();
+          // return to pool
+          const originalIdx = shuffled.findIndex(s => s === it);
+          shuffled[originalIdx].placed = false;
+          placed[gIdx].splice(iIdx, 1);
+          renderAll();
+        };
+        itemsEl.appendChild(el);
+      });
+      groupEl.querySelector('h4').innerHTML = `${g.name} <span style="font-size:11px;color:var(--muted)">(${placed[gIdx].length}/${g.items.length})</span>`;
+    });
+  }
+  renderAll();
+
+  document.getElementById('checkBtn').onclick = () => {
+    if(!shuffled.every(it => it.placed)){
+      showFeedback('info', '⚠️ Distribua todas as subtarefas primeiro!');
+      return;
+    }
+    let correct = true;
+    challenge.groups.forEach((g, gIdx) => {
+      const groupEl = groupsArea.children[gIdx];
+      const items = groupEl.querySelectorAll('.subtask');
+      placed[gIdx].forEach((it, iIdx) => {
+        if(it.group === g.name){
+          items[iIdx].style.background = 'rgba(16,185,129,.4)';
+          items[iIdx].style.borderColor = 'var(--green)';
+        } else {
+          items[iIdx].style.background = 'rgba(239,68,68,.4)';
+          items[iIdx].style.borderColor = 'var(--red)';
+          correct = false;
+        }
+      });
+    });
+    if(correct){
+      Sound.success();
+      state.score += 120 - state.mistakes * 10;
+      showFeedback('success', '🧩 Decomposição perfeita!');
+      setTimeout(nextChallenge, 1500);
+    } else {
+      Sound.error();
+      state.mistakes++;
+      showFeedback('error', '🔍 Algumas subtarefas estão na categoria errada.');
+      setTimeout(() => {
+        document.querySelectorAll('.subtask').forEach(s => {
+          s.style.background = '';
+          s.style.borderColor = '';
+        });
+      }, 2000);
+    }
+  };
+}
+
+/* ============ NAVIGATION ============ */
+function nextChallenge(){
+  const phase = phases[state.currentPhase];
+  state.currentChallenge++;
+  if(state.currentChallenge >= phase.challenges.length){
+    // Phase complete
+    state.completed.add(state.currentPhase);
+    showCompletionModal();
+  } else {
+    state.mistakes = 0;
+    render();
+  }
+}
+
+function showCompletionModal(){
+  Sound.win();
+  launchConfetti();
+  const stars = state.mistakes === 0 ? 3 : state.mistakes <= 2 ? 2 : 1;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div style="font-size:60px;margin-bottom:10px">🏆</div>
+      <h2>Fase Concluída!</h2>
+      <p>Você dominou o conceito de <strong>${phases[state.currentPhase].title}</strong>!</p>
+      <div class="stars">
+        ${[1,2,3].map(i => `<span class="star ${i<=stars?'active':''}" style="animation-delay:${i*0.2}s">⭐</span>`).join('')}
+      </div>
+      <p style="font-size:14px">Pontos ganhos nesta fase: <strong style="color:#fbbf24">+${state.score}</strong></p>
+      <div class="actions">
+        <button class="btn btn-secondary" id="homeBtn">🏠 Menu</button>
+        ${state.completed.size < 4 ? `<button class="btn btn-primary" id="nextPhaseBtn">▶ Próxima Fase</button>` : `<button class="btn btn-primary" id="finishBtn">🎉 Finalizar</button>`}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#homeBtn').onclick = () => {
+    Sound.click();
+    overlay.remove();
+    state.screen = 'home';
+    render();
+  };
+  const nextBtn = overlay.querySelector('#nextPhaseBtn') || overlay.querySelector('#finishBtn');
+  if(nextBtn){
+    nextBtn.onclick = () => {
+      Sound.click();
+      overlay.remove();
+      if(state.completed.size >= 4){
+        showFinalModal();
+      } else {
+        // Go to next uncompleted phase
+        const keys = Object.keys(phases);
+        const nextKey = keys.find(k => !state.completed.has(k)) || keys[0];
+        state.currentPhase = nextKey;
+        state.currentChallenge = 0;
+        state.mistakes = 0;
+        render();
+      }
+    };
+  }
+}
+
+function showFinalModal(){
+  launchConfetti();
+  setTimeout(launchConfetti, 500);
+  setTimeout(launchConfetti, 1000);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div style="font-size:70px;margin-bottom:10px">🎓</div>
+      <h2>Parabéns, Mestre!</h2>
+      <p>Você completou todos os 4 pilares do pensamento computacional:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;text-align:left">
+        ${Object.values(phases).map(p => `<div style="padding:10px;background:rgba(255,255,255,.05);border-radius:10px"><strong>${p.emoji} ${p.title}</strong><br><span style="font-size:12px;color:var(--muted)">${p.desc}</span></div>`).join('')}
+      </div>
+      <p>Pontuação final: <strong style="color:#fbbf24;font-size:20px">${state.score}</strong> pontos</p>
+      <div class="actions">
+        <button class="btn btn-primary" id="restartBtn">🔄 Jogar Novamente</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#restartBtn').onclick = () => {
+    Sound.click();
+    overlay.remove();
+    state.score = 0;
+    state.completed.clear();
+    state.screen = 'home';
+    render();
+  };
+}
+
+/* ============ FEEDBACK ============ */
+function showFeedback(type, message){
+  const existing = document.querySelector('.feedback');
+  if(existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'feedback ' + type;
+  el.innerHTML = `<span>${message}</span>`;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'fadeIn .3s reverse';
+    setTimeout(() => el.remove(), 300);
+  }, 2000);
+}
+
+/* ============ CONFETTI ============ */
+function launchConfetti(){
+  const colors = ['#a78bfa','#f472b6','#22d3ee','#fbbf24','#10b981','#ef4444'];
+  for(let i=0;i<40;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = (2 + Math.random()*2) + 's';
+    c.style.animationDelay = Math.random()*0.5 + 's';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    c.style.width = (6 + Math.random()*8) + 'px';
+    c.style.height = c.style.width;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+/* ============ SOUND BUTTON ============ */
+document.getElementById('soundBtn').onclick = () => {
+  const muted = Sound.toggle();
+  document.getElementById('soundBtn').textContent = muted ? '🔇' : '🔊';
+  document.getElementById('soundBtn').classList.toggle('muted', muted);
+  if(!muted) Sound.click();
+};
+
+/* ============ INIT ============ */
+render();
+
+// Unlock audio on first interaction
+document.addEventListener('click', () => {
+  if(!Sound.isMuted()) Sound.click();
+}, { once: true });
+</script>
+</body>
+</html>
